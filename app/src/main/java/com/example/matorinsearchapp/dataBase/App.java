@@ -14,10 +14,12 @@ public class App extends Application {
         super.onCreate();
         instance = this;
 
-        watchListDB = Room.databaseBuilder(this, WatchListDB.class, "database").build();
+        watchListDB = Room.databaseBuilder(getApplicationContext(), WatchListDB.class, "database").build();
     }
 
     public static App getInstance(){ return instance;}
 
-    public WatchListDB getWatchListDB() {return watchListDB; }
+    public WatchListDB getWatchListDB() {
+        return watchListDB;
+    }
 }

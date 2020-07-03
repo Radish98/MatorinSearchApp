@@ -79,28 +79,29 @@ public class Home extends Fragment implements View.OnClickListener {
                     }
 
                     myAdapter = new MyAdapter(getActivity(), sList);
-
                     myRecycler.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
                     myRecycler.setAdapter(myAdapter);
+
+                    //DB SAVE
+                    final SaveDBDao mySaveDBDao = App.getInstance().getWatchListDB().saveDBDao();
+
+                    AppExecutors.getInstance().diskIO().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            for(int i = 0; i < 10; i++){
+                                SaveDB sDB = new SaveDB();
+                                sDB.queue = i;
+                                sDB.link = response.body().getItems().get(i).getLink();
+                                sDB.title= response.body().getItems().get(i).getTitle();
+                                sDB.snippet = response.body().getItems().get(i).getSnippet();
+                                mySaveDBDao.insert(sDB);
+                            }
+                        }
+                    });
                 }else {
                     Toast.makeText(getContext(),"No Results", Toast.LENGTH_SHORT).show();
                 }
-
-//                final SaveDBDao mySaveDBDao = App.getInstance().getWatchListDB().saveDBDao();
-//
-//                AppExecutors.getInstance().diskIO().execute(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        for(int i = 0; i < 10; i++){
-//                            SaveDB sDB = new SaveDB();
-//                            sDB.queue = i;
-//                            sDB.link = response.body().getItems().get(i).getLink();
-//                            sDB.title= response.body().getItems().get(i).getTitle();
-//                            sDB.snippet = response.body().getItems().get(i).getSnippet();
-//                            mySaveDBDao.insert(sDB);
-//                        }
-//                    }
-//                });
+                
             }
             @Override
             public void onFailure(Call<SearchModel> call, Throwable t) {
