@@ -1,5 +1,8 @@
 package com.example.matorinsearchapp;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -37,8 +40,6 @@ public class Home extends Fragment implements View.OnClickListener {
     Button searchBTN;
     EditText searchET;
 
-
-
     private MyAdapter myAdapter;
     private RecyclerView myRecycler;
 
@@ -50,64 +51,91 @@ public class Home extends Fragment implements View.OnClickListener {
         searchET = view.findViewById(R.id.searchET);
         myRecycler= view.findViewById(R.id.listV);
         searchBTN.setOnClickListener(this);
+
+        final SaveDBDao mySaveDBDao = App.getInstance().getWatchListDB().saveDBDao();
+        AppExecutors.getInstance().diskIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                List<SearchItem> listFromDb = mySaveDBDao.getAll();
+                if(!listFromDb.isEmpty()){
+                    myAdapter = new MyAdapter(getActivity(), listFromDb);
+                    myRecycler.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
+                    myRecycler.setAdapter(myAdapter);
+                }
+            }
+        });
+
+
         return view;
     }
 
 
     @Override
     public void onClick(View v) {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(GoogleApi.BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        GoogleApi googleApi = retrofit.create(GoogleApi.class);
-        final Call<SearchModel> gotResults = googleApi.getList(GoogleApi.API_KEY,GoogleApi.CX,searchET.getText().toString());
 
-        gotResults.enqueue(new Callback<SearchModel>() {
-            @Override
-            public void onResponse(Call<SearchModel> call, final Response<SearchModel> response) {
-                if(response.body().getItems() != null) {
-                    Log.d("TAG", "msgAAAA" + response.body().getItems().get(0).getTitle());
-                    List<SearchItem> sList = new ArrayList<>();
-                    for (int i = 0; i < 10; i++) {
-                        SearchItem sI = new SearchItem();
-                        sI.setQueue(i);
-                        sI.setTitle(response.body().getItems().get(i).getTitle());
-                        sI.setSnippet(response.body().getItems().get(i).getSnippet());
-                        sI.setLink(response.body().getItems().get(i).getLink());
-                        sList.add(sI);
+        //Internet connection checker
+        ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if(netInfo != null && netInfo.isConnected()) {
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(GoogleApi.BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+            GoogleApi googleApi = retrofit.create(GoogleApi.class);
+            final Call<SearchModel> gotResults = googleApi.getList(GoogleApi.API_KEY, GoogleApi.CX, searchET.getText().toString());
+
+            gotResults.enqueue(new Callback<SearchModel>() {
+                @Override
+                public void onResponse(Call<SearchModel> call, final Response<SearchModel> response) {
+                    if (response.body().getItems() != null) {
+                        Log.d("TAG", "msgAAAA" + response.body().getItems().get(0).getTitle());
+                        List<SearchItem> sList = new ArrayList<>();
+                        for (int i = 0; i < 10; i++) {
+                            SearchItem sI = new SearchItem();
+                            sI.setQueue(i);
+                            sI.setTitle(response.body().getItems().get(i).getTitle());
+                            sI.setSnippet(response.body().getItems().get(i).getSnippet());
+                            sI.setLink(response.body().getItems().get(i).getLink());
+                            sList.add(sI);
+                        }
+
+                        myAdapter = new MyAdapter(getActivity(), sList);
+                        myRecycler.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
+                        myRecycler.setAdapter(myAdapter);
+
+                        //DB SAVE
+                        final SaveDBDao mySaveDBDao = App.getInstance().getWatchListDB().saveDBDao();
+
+                        AppExecutors.getInstance().diskIO().execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                for (int i = 0; i < 10; i++) {
+                                    SaveDB sDB = new SaveDB();
+                                    sDB.queue = i;
+                                    sDB.link = response.body().getItems().get(i).getLink();
+                                    sDB.title = response.body().getItems().get(i).getTitle();
+                                    sDB.snippet = response.body().getItems().get(i).getSnippet();
+                                    if (mySaveDBDao.getCount() < 10)
+                                        mySaveDBDao.insert(sDB);
+                                    else
+                                        mySaveDBDao.update(sDB.title, sDB.queue, sDB.link, sDB.snippet);
+                                }
+                            }
+                        });
+                    } else {
+                        Toast.makeText(getContext(), "No Results", Toast.LENGTH_SHORT).show();
                     }
 
-                    myAdapter = new MyAdapter(getActivity(), sList);
-                    myRecycler.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
-                    myRecycler.setAdapter(myAdapter);
-
-                    //DB SAVE
-                    final SaveDBDao mySaveDBDao = App.getInstance().getWatchListDB().saveDBDao();
-
-                    AppExecutors.getInstance().diskIO().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            for(int i = 0; i < 10; i++){
-                                SaveDB sDB = new SaveDB();
-                                sDB.queue = i;
-                                sDB.link = response.body().getItems().get(i).getLink();
-                                sDB.title= response.body().getItems().get(i).getTitle();
-                                sDB.snippet = response.body().getItems().get(i).getSnippet();
-                                mySaveDBDao.insert(sDB);
-                            }
-                        }
-                    });
-                }else {
-                    Toast.makeText(getContext(),"No Results", Toast.LENGTH_SHORT).show();
                 }
-                
-            }
-            @Override
-            public void onFailure(Call<SearchModel> call, Throwable t) {
 
-            }
-        });
+                @Override
+                public void onFailure(Call<SearchModel> call, Throwable t) {
+
+                }
+            });
+        }
+        else
+            Toast.makeText(getActivity(),"No Internet connection", Toast.LENGTH_SHORT).show();
 
     }
 }

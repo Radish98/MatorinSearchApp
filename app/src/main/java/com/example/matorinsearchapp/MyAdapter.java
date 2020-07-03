@@ -24,17 +24,12 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
     private LayoutInflater layoutInflater;
     Context mContext;
-    private int mPage;
-    private String mType;
 
 
 
-    public void notifyUpdate(List<SearchItem> newList,int page, String type){
-        this.mPage = page;
+    public void notifyUpdate(List<SearchItem> newList){
         this.mData =newList;
         Log.d("api", "is List empty " + mData.isEmpty());
-        this.notifyDataSetChanged();
-        this.mType = type;
     }
 
 

@@ -18,6 +18,9 @@ public interface SaveDBDao {
     @Query("SELECT * FROM savedb")
     List<SearchItem> getAll();
 
+    @Query("SELECT COUNT(*) FROM savedb")
+    int getCount();
+
     @Query("UPDATE savedb SET title = :title, queue = :queue, link = :link, snippet = :snippet WHERE queue = :queue")
     void update(String title, int queue, String link, String snippet );
 
