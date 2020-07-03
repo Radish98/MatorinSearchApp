@@ -1,45 +1,30 @@
 package com.example.matorinsearchapp;
 
 import android.content.Context;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.matorinsearchapp.models.SearchItem;
-
 import java.util.List;
 
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
-    Home home;
     private List<SearchItem> mData;
 
     private LayoutInflater layoutInflater;
     Context mContext;
 
-
-
     public void notifyUpdate(List<SearchItem> newList){
         this.mData =newList;
-        Log.d("api", "is List empty " + mData.isEmpty());
     }
-
-
 
     class MyViewHolder extends RecyclerView.ViewHolder {
         TextView titleTV;
         TextView linkTV;
         TextView snippetTV;
-
-
 
         public MyViewHolder(View itemView) {
             super(itemView);
@@ -49,18 +34,14 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         }
 
         void bind (final int i){
-
             String strTitle = mData.get(i).getTitle();
             String strLink = mData.get(i).getLink();
             String strSnippet = mData.get(i).getSnippet();
-            Log.d("adapter", "omdb");
 
             titleTV.setText(strTitle);
             linkTV.setText(strLink);
             snippetTV.setText(strSnippet);
         }
-
-
     }
 
     public MyAdapter(Context context, List<SearchItem> thmdbString){
@@ -77,7 +58,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         return position;
     }
 
-
     @Override
     public int getItemViewType(int position) {
         return super.getItemViewType(position);
@@ -89,7 +69,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         layoutInflater = LayoutInflater.from(viewGroup.getContext());
         View v = layoutInflater.inflate(R.layout.list_item, viewGroup, false);
         return new MyViewHolder(v);
-
     }
 
     @Override

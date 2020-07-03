@@ -5,7 +5,6 @@ import androidx.room.Insert;
 import androidx.room.Query;
 
 import com.example.matorinsearchapp.models.SearchItem;
-import com.example.matorinsearchapp.models.SearchModel;
 
 import java.util.List;
 
